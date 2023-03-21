@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from pathlib import Path
 from utils.general import bbox_iou, bbox_alpha_iou, box_iou, box_giou, box_diou, box_ciou, xywh2xyxy
 from utils.torch_utils import is_parallel
-
+from utils.metrics import SegmentationMetric
 
 def smooth_BCE(eps=0.1):  # https://github.com/ultralytics/yolov3/issues/238#issuecomment-598028441
     # return positive, negative label smoothing BCE targets
@@ -454,14 +454,15 @@ class ComputeSegLoss:
             setattr(self, k, getattr(det, k))
 
         self.BCEseg = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h['cls_pw']], device=device))
-    
-    def __call__(self, preds, targets, masks):  # predictions, targets, model
+        self.Segmetric = SegmentationMetric(3)
+
+    def __call__(self, preds, targets, masks, shapes):  # predictions, targets, model
         device = targets.device
 
         p, proto = preds if len(preds) == 2 else (preds, preds)
 
 
-        bs, nm, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
+        batch_size, nm, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
         
         lcls, lbox, lobj = torch.zeros(1, device=device), torch.zeros(1, device=device), torch.zeros(1, device=device)
         tcls, tbox, indices, anchors = self.build_targets(p, targets)  # targets
@@ -506,7 +507,18 @@ class ComputeSegLoss:
         if tuple(masks.shape[-2:]) != (mask_h, mask_w):  # downsample
             masks = F.interpolate(masks, (mask_h, mask_w), mode="bilinear", align_corners=False)
 
-        lseg = self.BCEseg(proto, masks).unsqueeze(0)
+        # line seg IOU
+        lane_line_pred = proto[:, 3:]
+        lane_line_mask = masks[:, 3:]
+        max_prec, _= torch.max(lane_line_pred, dim=1, keepdim=True)
+        lane_line_pred[lane_line_pred!=max_prec] = 0
+        lane_line_pred[lane_line_pred==max_prec] = 1
+        intersection = (lane_line_pred * lane_line_mask).view(batch_size, -1).sum(1)
+        union = (lane_line_pred + lane_line_mask).view(batch_size, -1).sum(1) - intersection
+        iou = (intersection + 1e-6) / (union + 1e-6)
+        liou = (1 - iou).mean()
+
+        lseg = self.BCEseg(proto, masks).unsqueeze(0) + liou
         lbox *= self.hyp['box']
         lobj *= self.hyp['obj']
         lcls *= self.hyp['cls']
@@ -607,11 +619,11 @@ class ComputeSegLossOTA:
 
         self.BCEseg = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h['cls_pw']], device=device))
 
-    def __call__(self, preds, targets, imgs, masks):  # predictions, targets, model   
+    def __call__(self, preds, targets, imgs, masks, shapes):  # predictions, targets, model   
         device = targets.device
 
         p, proto = preds if len(preds) == 2 else (preds, preds)
-        bs, nm, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
+        batch_size, nm, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
 
 
         lcls, lbox, lobj = torch.zeros(1, device=device), torch.zeros(1, device=device), torch.zeros(1, device=device)
@@ -665,7 +677,20 @@ class ComputeSegLossOTA:
             masks = F.interpolate(masks, (mask_h, mask_w), mode="bilinear", align_corners=False)
 
         lseg = self.BCEseg(proto, masks).unsqueeze(0)
-        
+
+        # line seg IOU
+        lane_line_pred = proto[:, 3:]
+        lane_line_mask = masks[:, 3:]
+        max_prec, _= torch.max(lane_line_pred, dim=1, keepdim=True)
+        lane_line_pred[lane_line_pred!=max_prec] = 0
+        lane_line_pred[lane_line_pred==max_prec] = 1
+        intersection = (lane_line_pred * lane_line_mask).view(batch_size, -1).sum(1)
+        union = (lane_line_pred + lane_line_mask).view(batch_size, -1).sum(1) - intersection
+        iou = (intersection + 1e-6) / (union + 1e-6)
+        liou = (1 - iou).mean()
+
+
+        lseg += liou
         lbox *= self.hyp['box']
         lobj *= self.hyp['obj']
         lcls *= self.hyp['cls']

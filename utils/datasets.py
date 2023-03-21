@@ -488,6 +488,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         # Cache dataset labels, check images and read shapes
         x = {}  # dict
         nm, nf, ne, nc = 0, 0, 0, 0  # number missing, found, empty, duplicate
+        each_class_num = {v : 0 for k, v in self.data_dict['obj_category'].items()}
         pbar = tqdm(zip(self.img_files, self.label_files), desc='Scanning images', total=len(self.img_files))
         for i, (im_file, lb_file) in enumerate(pbar):
             try:
@@ -504,17 +505,20 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 # verify labels
                 if os.path.isfile(lb_file):
                     nf += 1  # label found
+                    
                     with open(lb_file, 'r') as f:
                         data = json.load(f)
                         l=[]
                         for idx, obj in enumerate(data['labels']):
                             if obj['category'] in self.data_dict['obj_category'].keys():
+                                
                                 cls_id = int(self.data_dict['obj_category'][obj['category']])
                                 x1, y1 = float(obj['box2d']['x1']), float(obj['box2d']['y1'])
                                 x2, y2 = float(obj['box2d']['x2']), float(obj['box2d']['y2'])
                                 box = self._convert(shape, (x1, x2, y1, y2))
                                 l.append([cls_id]+list(box))
-
+                                each_class_num[cls_id] += 1
+                        
                         l = np.array(l, dtype=np.float32)
                     if len(l):
                         assert l.shape[1] == 5, 'labels require 5 columns each'
@@ -532,8 +536,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             except Exception as e:
                 nc += 1
                 print(f'{prefix}WARNING: Ignoring corrupted image and/or label {im_file}: {e}')
-            pbar.desc = f"{prefix}Scanning '{path.parent / path.stem}' images and labels... " \
-                        f"{nf} found, {nm} missing, {ne} empty, {nc} corrupted"
+            pbar.desc = f"{prefix}Scanning '{path.parent / path.stem}' images and labels. " \
+                        f"{nf} found, {nm} missing, {ne} empty, {nc} corrupted, {each_class_num} class num "
             
         pbar.close()
 

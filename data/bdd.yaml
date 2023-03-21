@@ -9,9 +9,9 @@ nc: 4
 seg_nc: 6
 # class names
 #names: ['person', 'bicycle', 'car', 'motorcycle'] # 0 -> 02 -> 2, 1 -> 13 -> 3, 2 -> 21 -> 1
-names: ['car', 'person', 'bicycle', 'motorcycle']
+names: ['vehicle', 'pedestrian', 'scooter', 'bicycle']
 
-obj_category: {'car': 0, 'truck': 0, 'bus': 0, 'person': 1, 'bicycle': 2, 'motorcycle': 3}
+obj_category: {'vehicle': 0, 'truck': 0, 'bus': 0, 'pedestrian': 1, 'scooter': 2, 'bicycle': 3}
 seg_category: {'background': 0, 'drivable area': 1, 'alternative': 2, 'single': 3, 'double': 4,'dashed': 5}
 
 # 0 -> 42 -> 2, 
