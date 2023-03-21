@@ -514,17 +514,6 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                                 x2, y2 = float(obj['box2d']['x2']), float(obj['box2d']['y2'])
                                 box = self._convert(shape, (x1, x2, y1, y2))
                                 l.append([cls_id]+list(box))
-                            # elif obj['category'] in self.data_dict['seg_category'].keys():
-                            #     cls_id = int(self.data_dict['seg_category'][obj['category']])
-                            #     poly2d = np.array(obj['poly2d'][0]['vertices'])
-                            #     if (poly2d[:,0] <= shape[0]).all() and (poly2d[:,1] <= shape[1]).all():
-                            #         x1, y1 = float(max(min(poly2d[:,0]),0)), float(max(min(poly2d[:,1]),0))
-                            #         x2, y2 = float(min(max(poly2d[:,0]), shape[0])), float(min(max(poly2d[:,1]), shape[1]))
-                            #         box = self._convert(shape, (x1, x2, y1, y2))
-
-                            #         poly2d[:,0] = poly2d[:, 0] / shape[0]
-                            #         poly2d[:,1] = poly2d[:, 1] / shape[1]
-                            #         segments.append([cls_id] + poly2d)
 
                         l = np.array(l, dtype=np.float32)
                     if len(l):

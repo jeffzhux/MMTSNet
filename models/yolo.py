@@ -717,7 +717,7 @@ class Model(nn.Module):
 
             
             x = m(x)  # run
-
+            
             y.append(x if m.i in self.save else None)  # save output
             output.append(x if m.i in self.output_idx else None)
         if profile:
@@ -895,13 +895,8 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
             if m in {ISegment}:
                 args[3] = make_divisible(args[3] * gw, 8)
         elif m is RGPSegment:
-            c1 = ch[f]
-            c2 = args[0]
+            c1, c2 = ch[f], args[0]
             args = [c1, c2, *args[1:]]
-            print(f'args : {args}')
-            print(f'c1, c2, {c1}, {c2}')
-            
-            print(f'channel f : {ch[f]}')
 
         elif m is ReOrg:
             c2 = ch[f] * 4
