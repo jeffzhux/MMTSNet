@@ -509,18 +509,15 @@ class ComputeSegLoss:
 
         lseg = self.BCEseg(proto, masks).unsqueeze(0)
 
-        # # line seg IOU
-        # lane_line_pred = proto[:, 3:]
-        # lane_line_mask = masks[:, 3:]
-        # max_prec, _= torch.max(lane_line_pred, dim=1, keepdim=True)
-        # lane_line_pred[lane_line_pred!=max_prec] = 0
-        # lane_line_pred[lane_line_pred==max_prec] = 1
-        # intersection = (lane_line_pred * lane_line_mask).view(batch_size, -1).sum(1)
-        # union = (lane_line_pred + lane_line_mask).view(batch_size, -1).sum(1) - intersection
-        # iou = (intersection + 1e-6) / (union + 1e-6)
-        # liou = (1 - iou).mean()
+        lane_line_pred = proto[:, 3:]
+        lane_line_mask = masks[:, 3:]
+        lane_line_pred = F.sigmoid(lane_line_pred)
+        intersection = (lane_line_pred * lane_line_mask).view(batch_size, -1).sum(1)
+        union = (lane_line_pred + lane_line_mask).view(batch_size, -1).sum(1) - intersection
+        iou = (intersection + 1e-6) / (union + 1e-6)
+        liou = (1 - iou).mean()
 
-        # lseg += liou
+        lseg += liou
         lbox *= self.hyp['box']
         lobj *= self.hyp['obj']
         lcls *= self.hyp['cls']
@@ -680,19 +677,17 @@ class ComputeSegLossOTA:
 
         lseg = self.BCEseg(proto, masks).unsqueeze(0)
 
-        # # line seg IOU
-        # lane_line_pred = proto[:, 3:]
-        # lane_line_mask = masks[:, 3:]
-        # max_prec, _= torch.max(lane_line_pred, dim=1, keepdim=True)
-        # lane_line_pred[lane_line_pred!=max_prec] = 0
-        # lane_line_pred[lane_line_pred==max_prec] = 1
-        # intersection = (lane_line_pred * lane_line_mask).view(batch_size, -1).sum(1)
-        # union = (lane_line_pred + lane_line_mask).view(batch_size, -1).sum(1) - intersection
-        # iou = (intersection + 1e-6) / (union + 1e-6)
-        # liou = (1 - iou).mean()
+        # line seg IOU
+        lane_line_pred = proto[:, 3:]
+        lane_line_mask = masks[:, 3:]
+        lane_line_pred = F.sigmoid(lane_line_pred)
+        
+        intersection = (lane_line_pred * lane_line_mask).view(batch_size, -1).sum(1)
+        union = (lane_line_pred + lane_line_mask).view(batch_size, -1).sum(1) - intersection
+        iou = (intersection + 1e-6) / (union + 1e-6)
+        liou = (1 - iou).mean()
 
-
-        # lseg += liou
+        lseg += liou
         lbox *= self.hyp['box']
         lobj *= self.hyp['obj']
         lcls *= self.hyp['cls']

@@ -111,7 +111,6 @@ def detect(save_img=False):
         _, seg_mask = torch.max(seg_mask, 1)
         
         seg_mask = seg_mask.int().squeeze().cpu().numpy()
-        seg_mask = np.expand_dims(seg_mask, axis=2)
         
         assert seg_mask.shape[0] != 1, f'seg_mask {seg_mask.shape}'
         assert np.all(seg_mask <= 5), f'seg_mask bigger then 5 '
@@ -151,7 +150,8 @@ def detect(save_img=False):
                         xywh_gn = (xywh / gn).view(-1).tolist()  # normalized xywh
                         cls = cls + 1
                         line = (cls, *xywh_gn, conf) if opt.save_conf else (cls, *xywh_gn)  # label format
-                        obj_save_list.append([p.name, cls.item(), *xywh.view(-1).tolist(), conf.item()])
+                        obj_line = [p.name, int(cls.item()), *xywh.view(-1).tolist(), conf.item()]
+                        obj_save_list.append([str(j).replace(' ','') for j in obj_line])
 
                         with open(txt_path + '.txt', 'a') as f:
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')

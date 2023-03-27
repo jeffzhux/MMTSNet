@@ -3,12 +3,12 @@ python train.py --noautoanchor --workers 8 --device 0 --batch-size 2 --data data
 
 # Train
     # singel
-        python train.py --workers 4 --device 0 --batch-size 32 --data data/bdd.yaml --img 640 640 --cfg cfg/training/yolov7-tiny.yaml --weight 'yolov7_tiny' --name yolov --hyp data/hyp.scratch.tiny.yaml
+        python train.py --workers 4 --device 0 --batch-size 64 --data data/bdd.yaml --img 640 640 --cfg cfg/training/yolov7-tiny.yaml --weight 'yolov7_tiny' --name mmtsnet --hyp data/hyp.scratch.tiny.yaml
     # multi
         python -m torch.distributed.run --nproc_per_node 2 --master_port 10001 train.py --workers 8 --device 0,1 --sync-bn --batch-size 128 --data data/bdd.yaml --img 640 640 --cfg cfg/training/yolov7-tiny.yaml --weights '' --name yolov7 --hyp data/hyp.scratch.tiny.yaml
 
 # detect
     # segmentations
-    python detect.py --weights weights/best.pt --name seg --conf 0.25 --img-size 640 --source ../data/Public_Testing_Dataset --no-trace
+    python detect.py --weights weights/best_iou.pt --name seg_iou --conf 0.25 --img-size 640 --source ../data/Public_Private_Testing_Dataset --no-trace
     # object detaction
-    python detect.py --weights weights/best.pt --name obj --conf 0.25 --img-size 640 --source ../data/Public_Testing_Dataset_Only_for_detection/JPEGImages/All --no-trace --save-txt --nosave
+    python detect.py --weights weights/best_iou.pt --name obj_iou --conf 0.25 --img-size 640 --source ../data/Public_Private_Testing_Dataset_Only_for_detection/JPEGImages/All --no-trace --save-txt --nosave
