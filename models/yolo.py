@@ -94,7 +94,6 @@ class Detect(nn.Module):
         box @= convert_matrix                          
         return (box, score)
 
-
 class IDetect(nn.Module):
     stride = None  # strides computed during build
     export = False  # onnx export
@@ -281,6 +280,7 @@ class ISegment(ISDetect):
         p = self.proto(x[0])
         return p
         # return (x, p) if self.training else (x[0], p) if self.export else (x[0], (x[1], p))
+
 class RGPSegment(nn.Module):
     # YOLOR Segment head for segmentation models
     def __init__(self, c1, c2):

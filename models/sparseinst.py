@@ -29,23 +29,20 @@ def _make_stack_3x3_convs(num_convs, in_channels, out_channels):
     return nn.Sequential(*convs)
 
 class InstanceBranch(nn.Module):
-    def __init__(self, in_channels, out_channels, num_classes, inst_dim, inst_convs, kernel_dim):
+    def __init__(self, in_channels, out_channels, inst_dim, inst_convs, kernel_dim):
         super().__init__()
         # norm = cfg.MODEL.SPARSE_INST.DECODER.NORM
         dim = inst_dim
         num_convs = inst_convs
         num_masks = out_channels
         kernel_dim = kernel_dim
-        self.num_classes = num_classes
 
         self.inst_convs = _make_stack_3x3_convs(num_convs, in_channels, dim)
         # iam prediction, a simple conv
         self.iam_conv = nn.Conv2d(dim, num_masks, 3, padding=1)
 
         # outputs
-        # self.cls_score = nn.Linear(dim, self.num_classes)
         self.mask_kernel = nn.Linear(dim, kernel_dim)
-        # self.objectness = nn.Linear(dim, 1)
 
         self.prior_prob = 0.01
         self._init_weights()
@@ -54,7 +51,7 @@ class InstanceBranch(nn.Module):
         for m in self.inst_convs.modules():
             if isinstance(m, nn.Conv2d):
                 c2_msra_fill(m)
-        bias_value = -math.log((1 - self.prior_prob) / self.prior_prob)
+        # bias_value = -math.log((1 - self.prior_prob) / self.prior_prob)
         # for module in [self.iam_conv, self.cls_score]:
         #     nn.init.constant_(module.bias, bias_value)
         nn.init.normal_(self.iam_conv.weight, std=0.01)
