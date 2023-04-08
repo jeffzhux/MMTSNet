@@ -18,7 +18,9 @@ pip install -r requirements.txt
 └──MMTSNET
    ├──data               # inference images
    ├──weights            # model weight
-   │  └──best.tflite     
+   │  ├──best.pb
+   │  │  └──...
+   │  └──best.tflite 
    ├──README.md
    ├──requirements.txt   # additional dependencies and version requirements
    └──run_model.py
