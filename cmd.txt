@@ -9,6 +9,9 @@ python train.py --noautoanchor --workers 8 --device 0 --batch-size 2 --data data
 
 # detect
     # segmentations
-    python detect.py --weights weights/best_iou.pt --name seg_iou --conf 0.25 --img-size 640 --source ../data/Public_Private_Testing_Dataset --no-trace
+    python detect.py --weights weights/best.pt --name seg_iou --conf 0.25 --img-size 640 --source ../data/Public_Private_Testing_Dataset --no-trace
     # object detaction
-    python detect.py --weights weights/best_iou.pt --name obj_iou --conf 0.25 --img-size 640 --source ../data/Public_Private_Testing_Dataset_Only_for_detection/JPEGImages/All --no-trace --save-txt --nosave
+    python detect.py --weights weights/best.pt --name obj_iou --conf 0.25 --img-size 640 --source ../data/Public_Private_Testing_Dataset_Only_for_detection/JPEGImages/All --no-trace --save-txt --nosave
+
+# run_model
+    python run_model.py detection ../data/Public_Private_Testing_Dataset ./runs --weight weights/best.tflite
