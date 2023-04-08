@@ -23,7 +23,9 @@ pip install -r requirements.txt
    │  └──best.tflite 
    ├──README.md
    ├──requirements.txt   # additional dependencies and version requirements
-   └──run_model.py
+   ├──run_model.py
+   └──techreport.pdf
+
 ```
 
 ## Data Structure
