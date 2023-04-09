@@ -6,7 +6,6 @@ import os
 import csv
 import cv2
 
-from numpy import random
 import numpy as np
 # from utils.datasets import LoadImages
 
@@ -57,23 +56,27 @@ class LoadImages:  # for inference
         elif os.path.isdir(p):
             files = sorted(glob.glob(os.path.join(p, '*.*')))  # dir
         elif os.path.isfile(p):
-            files = [p]  # files
+            _, extension = os.path.splitext(p)
+            if extension == '.txt':
+                with open(p, 'r') as file_txt:
+                    files = [line.strip() for line in file_txt]
+            else:
+                files = [p]  # files
         else:
             raise Exception(f'ERROR: {p} does not exist')
         img_formats = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']  # acceptable image suffixes
         images = [x for x in files if x.split('.')[-1].lower() in img_formats]
         ni = len(images)
-
+        
         self.img_size = img_size
         self.stride = stride
         self.files = images
         self.nf = ni # number of files
-        self.video_flag = [False] * ni
         self.mode = 'image'
 
         self.cap = None
         assert self.nf > 0, f'No images or videos found in {p}. ' \
-                            f'Supported formats are:\nimages: {img_formats}\nvideos: {vid_formats}'
+                            f'Supported formats are:\nimages: {img_formats}'
 
     def __iter__(self):
         self.count = 0
@@ -84,29 +87,10 @@ class LoadImages:  # for inference
             raise StopIteration
         path = self.files[self.count]
 
-        if self.video_flag[self.count]:
-            # Read video
-            self.mode = 'video'
-            ret_val, img0 = self.cap.read()
-            if not ret_val:
-                self.count += 1
-                self.cap.release()
-                if self.count == self.nf:  # last video
-                    raise StopIteration
-                else:
-                    path = self.files[self.count]
-                    self.new_video(path)
-                    ret_val, img0 = self.cap.read()
-
-            self.frame += 1
-            print(f'video {self.count + 1}/{self.nf} ({self.frame}/{self.nframes}) {path}: ', end='')
-
-        else:
-            # Read image
-            self.count += 1
-            img0 = cv2.imread(path)  # BGR
-            assert img0 is not None, 'Image Not Found ' + path
-            #print(f'image {self.count}/{self.nf} {path}: ', end='')
+        # Read image
+        self.count += 1
+        img0 = cv2.imread(path)  # BGR
+        assert img0 is not None, 'Image Not Found ' + path
         
 
         # Padded resize
@@ -225,7 +209,8 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, agnostic=Fa
     return output
 
 def detect():
-    source, weights, imgsz = opt.source, opt.weights[0], opt.img_size
+    source, weights, imgsz = opt.source, opt.weights, opt.img_size
+    print(weights)
     # Directories
     if opt.task == 'detection':
         save_dir = Path(opt.output, exist_ok=True) / 'object_detections'
@@ -323,7 +308,7 @@ if __name__ == '__main__':
     parser.add_argument('task', type=str, choices=['detection','segmentation'], help='detection/segmentation')
     parser.add_argument('source', type=str, default='inference/images', help='source')  # file/folder, 0 for webcam
     parser.add_argument('output', type=str, help='output path')
-    parser.add_argument('--weights', nargs='+', type=str, default='weights/best.tflite', help='model.pt path(s)')
+    parser.add_argument('--weights', type=str, default='weights/best.tflite', help='model.pt path(s)')
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
