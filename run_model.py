@@ -288,8 +288,8 @@ def detect():
                         conf_list = det[:, 4:5].tolist()
                         cls_list = (det[:, 5:] + 1).astype(np.int32).tolist() # cls
                         
-                        for xywh, conf, cls in zip(xywh_list, conf_list, cls_list):
-                            obj_save_list.append([str(p.name), *cls, *xywh, *conf])
+                        for xywh, conf, clsses in zip(xywh_list, conf_list, cls_list):
+                            obj_save_list.append([str(p.name), str(*clsses).replace(' ',''), str(*xywh).replace(' ', ''), str(*conf).replace(' ', '')])
                     
                         # for *xyxy, conf, cls in reversed(det):
                         #     names = ['vehicle', 'pedestrian', 'scooter', 'bicycle']
@@ -297,7 +297,6 @@ def detect():
                         #     colors = [[random.randint(0, 255) for _ in range(3)] for _ in names]
                         #     plot_one_box(xyxy, im0s, label=label, color=colors[int(cls)], line_thickness=1)
                         #     cv2.imwrite(str(save_dir / p.name), im0s)
-        
     if opt.task == 'detection':
         with open(str(save_dir / 'submission.csv'), 'w', newline='') as f:
             write = csv.writer(f)
